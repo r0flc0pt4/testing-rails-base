@@ -1,0 +1,13 @@
+.row.justify-content-md-center
+  - @plans.each do |plan|
+    .col-md-auto.col{ data: { turbolinks: 'false' } }
+      %a.btn.btn-default{ href: new_payment_path(plan: plan.id) }
+        %p
+          = plan.name
+          %p
+            = plan.metadata[:description]
+          %p
+            Charges
+            = "$#{plan.amount / 100.0}"
+            every
+            = plan.interval

@@ -1,0 +1,38 @@
+version: '3'
+services:
+  worker: &base_app
+    build: .
+    command: sidekiq
+    env_file: .env
+    volumes:
+      - .:/app
+    depends_on:
+      - postgres
+      - redis
+      - mailcatcher
+  app:
+    <<: *base_app
+    ports:
+      - "3000:3000"
+    command: rails server -b '0.0.0.0'
+  postgres:
+    image: postgres
+    ports:
+      - "5432:5432"
+    # For a persistent DB
+    # https://peterlyons.com/problog/2017/12/how-to-use-docker-to-run-local-databases
+    # To nuke the volumes:
+    # 1. `rm -rf ~/docker-volumes/host ~/docker-volumes/postgres`
+    # 2. `docker-compose rm postgres`
+    volumes:
+      - '~/docker-volumes/host:/host'
+      - '~/docker-volumes/postgres:/var/lib/postgresql/data'
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+  mailcatcher:
+    image: schickling/mailcatcher
+    ports:
+      - "1080:1080"
+      - "1025"

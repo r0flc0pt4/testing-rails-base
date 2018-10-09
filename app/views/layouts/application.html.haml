@@ -1,0 +1,59 @@
+!!!
+%html
+  %head
+    %title
+      = Rails.application.class.parent_name
+    = csrf_meta_tags
+    = stylesheet_link_tag 'application', media: 'all'
+    = javascript_include_tag 'application', defer: true
+    = render 'shared/heap'
+  %body
+    %nav.navbar.navbar-expand-lg.navbar-light.bg-light
+      %a.navbar-brand{href: '#'}
+        = Rails.application.class.parent_name
+      %button.navbar-toggler{"aria-controls" => "navbarSupportedContent", "aria-expanded" => "false", "aria-label" => "Toggle navigation", "data-target" => "#navbarSupportedContent", "data-toggle" => "collapse", :type => "button"}
+        %span.navbar-toggler-icon
+      #navbarSupportedContent.collapse.navbar-collapse
+        %ul.navbar-nav.mr-auto
+          %li.nav-item.active
+            %a.nav-link{:href => "/"}
+              Home
+              %span.sr-only (current)
+        - if user_signed_in?
+          %ul.navbar-nav.navbar-right
+            %li.nav-item
+              = link_to "Log Out #{current_user.email}", destroy_user_session_path, method: 'delete', class: 'btn btn-default'
+    .container-fluid
+      .row
+        .col
+          - if notice
+            .alert.alert-info
+              = notice
+          - if alert
+            %p.alert.alert-danger
+              = alert
+      .row.pt-3
+        %main.col{role: 'main'}
+          = yield
+      = yield :javascripts
+      :ruby
+        # to use
+        # - content_for :javascripts do
+        #   :javascript
+        #     $(document).ready(function({});)
+    %footer.pt-4.my-md-5.border-top.container-fluid
+      .row.justify-content-md-center
+        .col.col-md-auto
+          %ul.list-unstyled.text-small
+            %li
+              %a.text-muted{:href => page_path('privacy')}
+                Privacy
+        .col.col-md-auto
+          %ul.list-unstyled.text-small
+            %li
+              %a.text-muted{:href => page_path('terms')}
+                Terms
+      .row.justify-content-md-center
+        .col.col-md-auto
+          = Rails.application.class.parent_name
+          © 2018

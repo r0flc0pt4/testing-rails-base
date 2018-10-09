@@ -1,0 +1,20 @@
+docker: &docker
+  adapter: postgresql
+  encoding: unicode
+  pool: 5
+  timeout: 5000
+  username: postgres
+  host: localhost
+  port: 5432
+
+development:
+  <<: *docker
+  database: rails_base_dev
+
+test:
+  <<: *docker
+  database: rails_base_test
+
+production:
+  adapter: postgresql
+  database: rails_base_pro

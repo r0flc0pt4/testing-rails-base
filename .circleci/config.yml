@@ -1,0 +1,76 @@
+# Ruby CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-ruby/ for more details
+#
+version: 2
+jobs:
+  build:
+    parallelism: 1
+    docker:
+      - image: circleci/ruby:2.5.1-node-browsers
+        environment:
+          PGHOST: localhost
+          PGUSER: postgres
+          RAILS_ENV: test
+      - image: circleci/postgres:latest-ram
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ""
+
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+      - run:
+          name: Setup Code Climate test-reporter
+          command: |
+            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+            chmod +x ./cc-test-reporter
+
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "Gemfile.lock" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+
+      - run:
+          name: install dependencies
+          command: |
+            bundle install --jobs=4 --retry=3 --path vendor/bundle
+
+      - save_cache:
+          paths:
+            - ./vendor/bundle
+          key: v1-dependencies-{{ checksum "Gemfile.lock" }}
+        
+      # Database setup
+      - run: bundle exec rake db:create db:test:prepare
+
+      # run tests!
+      - run:
+          name: run tests
+          command: |
+            mkdir /tmp/test-results
+            ./cc-test-reporter before-build
+            TEST_FILES="$(circleci tests glob "spec/**/*_spec.rb" | circleci tests split --split-by=timings)"
+            bundle exec rspec --format progress \
+                              --format RspecJunitFormatter \
+                              --tag ~skip \
+                              --out /tmp/test-results/rspec.xml \
+                              --format progress \
+                              -- $(echo "${TEST_FILES}" | sed -e 's/\n/\\n/' -e 's/ /\ /')
+            ./cc-test-reporter after-build
+      # collect reports
+      - store_test_results:
+          path: /tmp/test-results
+      - store_artifacts:
+          path: /tmp/test-results
+          destination: test-results
+      - store_artifacts:
+          path: tmp/capybara
+
+workflows:
+  version: 2
+  test-and-deploy:
+    jobs:
+      - build
